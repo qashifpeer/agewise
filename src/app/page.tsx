@@ -1,101 +1,243 @@
-import Image from "next/image";
+"use client";
+import { useState, useEffect } from "react";
+import { BsInfoCircle } from "react-icons/bs";
 
-export default function Home() {
+// Defining voter interface
+interface Voter {
+  id: number;
+  nameOfVoter: string;
+  age: number;
+  sex: string;
+  ageGroup: string;
+}
+
+// Defining age groups interface
+interface AgeGroupCount {
+  "18-19 years": number;
+  "20-29 years": number;
+  "30-59 years": number;
+  "60-84 years": number;
+  "Above 85 years": number;
+}
+
+export default function VoterForm() {
+  const [nameOfVoter, setNameOfVoter] = useState<string>("");
+  const [age, setAge] = useState<number>(0);
+  const [sex, setSex] = useState<string>("Male");
+  const [voters, setVoters] = useState<Voter[]>([]);
+  const [ageGroupCount, setAgeGroupCount] = useState<AgeGroupCount>({
+    "18-19 years": 0,
+    "20-29 years": 0,
+    "30-59 years": 0,
+    "60-84 years": 0,
+    "Above 85 years": 0,
+  });
+
+  // Function to determine age group
+  const getAgeGroup = (age: number): string => {
+    if (age >= 18 && age <= 19) return "18-19 years";
+    if (age >= 20 && age <= 29) return "20-29 years";
+    if (age >= 30 && age <= 59) return "30-59 years";
+    if (age >= 60 && age <= 84) return "60-84 years";
+    if (age > 85) return "Above 60 years";
+    return "Invalid Age";
+  };
+
+  // Load data from localStorage when the component mounts
+  useEffect(() => {
+    const savedVoters = localStorage.getItem("voters");
+    if (savedVoters) {
+      const parsedVoters = JSON.parse(savedVoters);
+      setVoters(parsedVoters);
+      updateAgeGroupCount(parsedVoters);
+    }
+  }, []);
+
+  // Update the age group count based on existing voters
+  const updateAgeGroupCount = (votersList: Voter[]) => {
+    const ageGroupSummary: AgeGroupCount = {
+      "18-19 years": 0,
+      "20-29 years": 0,
+      "30-59 years": 0,
+      "60-84 years": 0,
+      "Above 85 years": 0,
+    };
+
+    votersList.forEach((voter) => {
+      const ageGroup = voter.ageGroup;
+      ageGroupSummary[ageGroup as keyof AgeGroupCount]++;
+    });
+
+    setAgeGroupCount(ageGroupSummary);
+  };
+
+  // Function to handle form submission
+  const handleSubmit = (e: React.FormEvent<HTMLFormElement>) => {
+    e.preventDefault();
+
+    const ageGroup = getAgeGroup(age);
+
+    const newVoter: Voter = {
+      id: voters.length + 1,
+      nameOfVoter,
+      age,
+      sex,
+      ageGroup,
+    };
+
+    const updatedVoters = [...voters, newVoter];
+    setVoters(updatedVoters);
+    updateAgeGroupCount(updatedVoters);
+
+    // Save to localStorage
+    localStorage.setItem("voters", JSON.stringify(updatedVoters));
+
+    // Clear form fields
+    setNameOfVoter("");
+    setAge(0);
+    setSex("Male");
+  };
+
+  // Function to delete a voter and decrement age group count
+  const deleteVoter = (id: number) => {
+    const voterToDelete = voters.find((voter) => voter.id === id);
+    if (voterToDelete) {
+      const updatedVoters = voters.filter((voter) => voter.id !== id);
+      const updatedAgeGroupCount = { ...ageGroupCount };
+      updatedAgeGroupCount[voterToDelete.ageGroup as keyof AgeGroupCount]--;
+
+      setVoters(updatedVoters);
+      setAgeGroupCount(updatedAgeGroupCount);
+      localStorage.setItem("voters", JSON.stringify(updatedVoters));
+    }
+  };
+
+  // Clear all voters and reset everything
+  const clearAll = () => {
+    setVoters([]);
+    setAgeGroupCount({
+      "18-19 years": 0,
+      "20-29 years": 0,
+      "30-59 years": 0,
+      "60-84 years": 0,
+      "Above 85 years": 0,
+    });
+    localStorage.removeItem("voters");
+  };
+
   return (
-    <div className="grid grid-rows-[20px_1fr_20px] items-center justify-items-center min-h-screen p-8 pb-20 gap-16 sm:p-20 font-[family-name:var(--font-geist-sans)]">
-      <main className="flex flex-col gap-8 row-start-2 items-center sm:items-start">
-        <Image
-          className="dark:invert"
-          src="https://nextjs.org/icons/next.svg"
-          alt="Next.js logo"
-          width={180}
-          height={38}
-          priority
-        />
-        <ol className="list-inside list-decimal text-sm text-center sm:text-left font-[family-name:var(--font-geist-mono)]">
-          <li className="mb-2">
-            Get started by editing{" "}
-            <code className="bg-black/[.05] dark:bg-white/[.06] px-1 py-0.5 rounded font-semibold">
-              src/app/page.tsx
-            </code>
-            .
-          </li>
-          <li>Save and see your changes instantly.</li>
-        </ol>
-
-        <div className="flex gap-4 items-center flex-col sm:flex-row">
-          <a
-            className="rounded-full border border-solid border-transparent transition-colors flex items-center justify-center bg-foreground text-background gap-2 hover:bg-[#383838] dark:hover:bg-[#ccc] text-sm sm:text-base h-10 sm:h-12 px-4 sm:px-5"
-            href="https://vercel.com/new?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-            target="_blank"
-            rel="noopener noreferrer"
-          >
-            <Image
-              className="dark:invert"
-              src="https://nextjs.org/icons/vercel.svg"
-              alt="Vercel logomark"
-              width={20}
-              height={20}
+    <div className="h-screen border-1 flex justify-center items-start mt-2">
+      <div className="flex flex-col justify-center items-center border border-green-700">
+        <h1 className="font-bold text-slate-100 uppercase text-lg mb-4">VIF by qashif  <a href="https://x.com/QashifPeer" target="blank"><BsInfoCircle className="inline-block text-sky-500 cursor-pointer" /></a></h1>
+        <form onSubmit={handleSubmit}>
+          <div className="flex justify-between">
+            <label htmlFor="nameOfVoter" className="w-1/2">
+              Name of Voter:
+            </label>
+            <input
+              type="text"
+              id="nameOfVoter"
+              value={nameOfVoter}
+              className="w-1/2 text-slate-700 px-2"
+              onChange={(e) => setNameOfVoter(e.target.value)}
+              required
             />
-            Deploy now
-          </a>
-          <a
-            className="rounded-full border border-solid border-black/[.08] dark:border-white/[.145] transition-colors flex items-center justify-center hover:bg-[#f2f2f2] dark:hover:bg-[#1a1a1a] hover:border-transparent text-sm sm:text-base h-10 sm:h-12 px-4 sm:px-5 sm:min-w-44"
-            href="https://nextjs.org/docs?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-            target="_blank"
-            rel="noopener noreferrer"
-          >
-            Read our docs
-          </a>
-        </div>
-      </main>
-      <footer className="row-start-3 flex gap-6 flex-wrap items-center justify-center">
-        <a
-          className="flex items-center gap-2 hover:underline hover:underline-offset-4"
-          href="https://nextjs.org/learn?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-          target="_blank"
-          rel="noopener noreferrer"
-        >
-          <Image
-            aria-hidden
-            src="https://nextjs.org/icons/file.svg"
-            alt="File icon"
-            width={16}
-            height={16}
-          />
-          Learn
-        </a>
-        <a
-          className="flex items-center gap-2 hover:underline hover:underline-offset-4"
-          href="https://vercel.com/templates?framework=next.js&utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-          target="_blank"
-          rel="noopener noreferrer"
-        >
-          <Image
-            aria-hidden
-            src="https://nextjs.org/icons/window.svg"
-            alt="Window icon"
-            width={16}
-            height={16}
-          />
-          Examples
-        </a>
-        <a
-          className="flex items-center gap-2 hover:underline hover:underline-offset-4"
-          href="https://nextjs.org?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-          target="_blank"
-          rel="noopener noreferrer"
-        >
-          <Image
-            aria-hidden
-            src="https://nextjs.org/icons/globe.svg"
-            alt="Globe icon"
-            width={16}
-            height={16}
-          />
-          Go to nextjs.org →
-        </a>
-      </footer>
+          </div>
+
+          <div className="flex  justify-between mt-1">
+            <label htmlFor="age" className="">
+              Age:
+            </label>
+            <input
+              type="number"
+              id="age"
+              value={age}
+              className="w-1/2 text-slate-700 px-2"
+              onChange={(e) => setAge(Number(e.target.value))}
+              required
+            />
+          </div>
+
+          <div className="flex justify-between mt-1">
+            <label htmlFor="sex">Sex:</label>
+            <select
+              id="sex"
+              value={sex}
+              className="text-slate-700"
+              onChange={(e) => setSex(e.target.value)}
+            >
+              <option value="Male">Male</option>
+              <option value="Female">Female</option>
+            </select>
+          </div>
+          <div className="flex justify-center gap-2 mt-2">
+            <button className=" bg-green-700 border border-green-700 px-2 py-1 rounded-lg hover:bg-green-600 transition-all duration-200 hover:text-black" type="submit">Submit </button>
+            <button className="bg-orange-400 border border-green-700 px-2 py-1 rounded-lg hover:bg-green-600 transition-all duration-200 hover:text-black" type="button" onClick={clearAll}>
+              Clear All
+            </button>
+          </div>
+        </form>
+
+        <h2>Voter Count by Age Group</h2>
+        <table className="border border-orange-400">
+          <thead className="border border-orange-400">
+            <tr >
+              <th>Age Group</th>
+              <th>Total Voters</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr className="border border-orange-400">
+              <td>18-19 years</td>
+              <td className="pl-4">{ageGroupCount["18-19 years"]}</td>
+            </tr>
+            <tr className="border border-orange-400">
+              <td>20-24 years</td>
+              <td className="pl-4">{ageGroupCount["20-29 years"]}</td>
+            </tr>
+            <tr className="border border-orange-400">
+              <td>25-35 years</td>
+              <td className="pl-4">{ageGroupCount["30-59 years"]}</td>
+            </tr>
+            <tr className="border border-orange-400">
+              <td>36-60 years</td>
+              <td className="pl-4">{ageGroupCount["60-84 years"]}</td>
+            </tr>
+            <tr className="">
+              <td>Above 60 years</td>
+              <td className="pl-4">{ageGroupCount["Above 85 years"]}</td>
+            </tr>
+          </tbody>
+        </table>
+
+        <h2>Voter List by Sex</h2>
+        <table className="border border-green-700">
+          <thead>
+            <tr className="border border-green-700">
+              <th className="border-l border-l-green-700 px-1 text-center text-xs font-bold">ID</th>
+              <th className="border-l border-l-green-700 px-1 text-center text-xs font-bold">Name</th>
+              <th className="border-l border-l-green-700 px-1 text-center text-xs font-bold">Age</th>
+              <th className="border-l border-l-green-700 px-1 text-center text-xs font-bold">Sex</th>
+              <th className="border-l border-l-green-700 px-1 text-center text-xs font-bold">Age Group</th>
+              <th className="border-l border-l-green-700 px-1 text-center text-xs font-bold">Actions</th>
+            </tr>
+          </thead>
+          <tbody>
+            {voters.map((voter) => (
+              <tr key={voter.id} onDoubleClick={() => deleteVoter(voter.id)} className="border border-green-700">
+                <td className="border-l border-l-green-700 px-1 text-center text-xs">{voter.id}</td>
+                <td className="border-l border-l-green-700 px-1 text-center text-xs">{voter.nameOfVoter}</td>
+                <td className="border-l border-l-green-700 px-1 text-center text-xs">{voter.age}</td>
+                <td className="border-l border-l-green-700 px-1 text-center text-xs">{voter.sex}</td>
+                <td className="border-l border-l-green-700 px-1 text-center text-xs">{voter.ageGroup}</td>
+                <td className="border-l border-l-green-700 px-1 text-center text-xs">
+                  <button onClick={() => deleteVoter(voter.id)}>Delete</button>
+                </td>
+              </tr>
+            ))}
+          </tbody>
+        </table>
+      </div>
     </div>
   );
 }
