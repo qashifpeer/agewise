@@ -13,11 +13,11 @@ interface Voter {
 
 // Defining age groups interface
 interface AgeGroupCount {
-  "18-19 years": number;
-  "20-29 years": number;
-  "30-59 years": number;
-  "60-84 years": number;
-  "Above 85 years": number;
+  "18-19 years": { male: number; female: number };
+  "20-29 years": { male: number; female: number };
+  "30-59 years": { male: number; female: number };
+  "60-84 years": { male: number; female: number };
+  "Above 85 years": { male: number; female: number };
 }
 
 export default function VoterForm() {
@@ -26,12 +26,15 @@ export default function VoterForm() {
   const [sex, setSex] = useState<string>("Male");
   const [voters, setVoters] = useState<Voter[]>([]);
   const [ageGroupCount, setAgeGroupCount] = useState<AgeGroupCount>({
-    "18-19 years": 0,
-    "20-29 years": 0,
-    "30-59 years": 0,
-    "60-84 years": 0,
-    "Above 85 years": 0,
+    "18-19 years": { male: 0, female: 0 },
+    "20-29 years": { male: 0, female: 0 },
+    "30-59 years": { male: 0, female: 0 },
+    "60-84 years": { male: 0, female: 0 },
+    "Above 85 years": { male: 0, female: 0 },
   });
+
+  const [totalMale, setTotalMale] = useState<number>(0);
+  const [totalFemale, setTotalFemale] = useState<number>(0);
 
   // Function to determine age group
   const getAgeGroup = (age: number): string => {
@@ -39,7 +42,7 @@ export default function VoterForm() {
     if (age >= 20 && age <= 29) return "20-29 years";
     if (age >= 30 && age <= 59) return "30-59 years";
     if (age >= 60 && age <= 84) return "60-84 years";
-    if (age > 85) return "Above 60 years";
+    if (age > 85) return "Above 84 years";
     return "Invalid Age";
   };
 
@@ -56,19 +59,30 @@ export default function VoterForm() {
   // Update the age group count based on existing voters
   const updateAgeGroupCount = (votersList: Voter[]) => {
     const ageGroupSummary: AgeGroupCount = {
-      "18-19 years": 0,
-      "20-29 years": 0,
-      "30-59 years": 0,
-      "60-84 years": 0,
-      "Above 85 years": 0,
+      "18-19 years": { male: 0, female: 0 },
+      "20-29 years": { male: 0, female: 0 },
+      "30-59 years": { male: 0, female: 0 },
+      "60-84 years": { male: 0, female: 0 },
+      "Above 85 years": { male: 0, female: 0 },
     };
+
+    let maleCount = 0;
+    let femaleCount = 0;
 
     votersList.forEach((voter) => {
       const ageGroup = voter.ageGroup;
-      ageGroupSummary[ageGroup as keyof AgeGroupCount]++;
+      if (voter.sex === "Male") {
+        ageGroupSummary[ageGroup as keyof AgeGroupCount].male++;
+        maleCount++;
+      } else if (voter.sex === "Female") {
+        ageGroupSummary[ageGroup as keyof AgeGroupCount].female++;
+        femaleCount++;
+      }
     });
 
     setAgeGroupCount(ageGroupSummary);
+    setTotalMale(maleCount);
+    setTotalFemale(femaleCount);
   };
 
   // Function to handle form submission
@@ -103,11 +117,8 @@ export default function VoterForm() {
     const voterToDelete = voters.find((voter) => voter.id === id);
     if (voterToDelete) {
       const updatedVoters = voters.filter((voter) => voter.id !== id);
-      const updatedAgeGroupCount = { ...ageGroupCount };
-      updatedAgeGroupCount[voterToDelete.ageGroup as keyof AgeGroupCount]--;
-
+      updateAgeGroupCount(updatedVoters);
       setVoters(updatedVoters);
-      setAgeGroupCount(updatedAgeGroupCount);
       localStorage.setItem("voters", JSON.stringify(updatedVoters));
     }
   };
@@ -116,18 +127,20 @@ export default function VoterForm() {
   const clearAll = () => {
     setVoters([]);
     setAgeGroupCount({
-      "18-19 years": 0,
-      "20-29 years": 0,
-      "30-59 years": 0,
-      "60-84 years": 0,
-      "Above 85 years": 0,
+      "18-19 years": { male: 0, female: 0 },
+      "20-29 years": { male: 0, female: 0 },
+      "30-59 years": { male: 0, female: 0 },
+      "60-84 years": { male: 0, female: 0 },
+      "Above 85 years": { male: 0, female: 0 },
     });
+    setTotalMale(0);
+    setTotalFemale(0);
     localStorage.removeItem("voters");
   };
 
   return (
     <div className="h-screen border-1 flex justify-center items-start mt-2">
-      <div className="flex flex-col justify-center items-center border border-green-700">
+      <div className="flex flex-col justify-center items-center border border-green-700 p-1">
         <h1 className="font-bold text-slate-100 uppercase text-lg mb-4">VIF by qashif  <a href="https://x.com/QashifPeer" target="blank"><BsInfoCircle className="inline-block text-sky-500 cursor-pointer" /></a></h1>
         <form onSubmit={handleSubmit}>
           <div className="flex justify-between">
@@ -178,20 +191,29 @@ export default function VoterForm() {
           </div>
         </form>
 
-        <h2>Voter Count by Age Group</h2>
+        <h2 className="mt-4">Voter Count by Age Group</h2>
         <table className="border border-orange-400">
           <thead className="border border-orange-400">
             <tr >
-              <th>Age Group</th>
-              <th>Total Voters</th>
+              <th className="text-sm font-bold bg-slate-100 text-slate-700 border-l border-l-orange-500">Age Group</th>
+              <th className="text-sm font-bold bg-slate-100 text-slate-700 border-l border-l-orange-500">Male</th>
+              <th className="text-sm font-bold bg-slate-100 text-slate-700 border-l border-l-orange-500">Female</th>
+              <th className="text-sm font-bold bg-slate-100 text-slate-700 border-l border-l-orange-500">Total Voters</th>
             </tr>
           </thead>
           <tbody>
-            <tr className="border border-orange-400">
-              <td>18-19 years</td>
-              <td className="pl-4">{ageGroupCount["18-19 years"]}</td>
+          {Object.keys(ageGroupCount).map((ageGroup) => {
+            const group = ageGroupCount[ageGroup as keyof AgeGroupCount];
+            return (
+            <tr className="border border-orange-400" key={ageGroup}>
+              <td className="">{ageGroup}</td>
+              <td className="pl-4">{group.male}</td>
+              <td className="pl-4">{group.female}</td>
+              <td className="pl-4">{group.male + group.female}</td>
             </tr>
-            <tr className="border border-orange-400">
+             );
+            })}
+            {/* <tr className="border border-orange-400">
               <td>20-24 years</td>
               <td className="pl-4">{ageGroupCount["20-29 years"]}</td>
             </tr>
@@ -206,8 +228,16 @@ export default function VoterForm() {
             <tr className="">
               <td>Above 60 years</td>
               <td className="pl-4">{ageGroupCount["Above 85 years"]}</td>
-            </tr>
+            </tr> */}
           </tbody>
+          <tfoot>
+          <tr>
+            <td className="border-l border-l-orange-500 bg-slate-100 text-black font-bold">Total</td>
+            <td className="border-l border-l-orange-500 bg-slate-100 text-black font-bold pl-4">{totalMale}</td>
+            <td className="border-l border-l-orange-500 bg-slate-100 text-black font-bold pl-4">{totalFemale}</td>
+            <td className=" border-l border-l-orange-600 bg-slate-100 text-black font-bold pl-4">{totalMale + totalFemale}</td>
+          </tr>
+        </tfoot>
         </table>
 
         <h2>Voter List by Sex</h2>
