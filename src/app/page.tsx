@@ -17,7 +17,7 @@ interface AgeGroupCount {
   "20-29 years": { male: number; female: number };
   "30-59 years": { male: number; female: number };
   "60-84 years": { male: number; female: number };
-  "Above 85 years": { male: number; female: number };
+  "Above 84 years": { male: number; female: number };
 }
 
 export default function VoterForm() {
@@ -30,7 +30,7 @@ export default function VoterForm() {
     "20-29 years": { male: 0, female: 0 },
     "30-59 years": { male: 0, female: 0 },
     "60-84 years": { male: 0, female: 0 },
-    "Above 85 years": { male: 0, female: 0 },
+    "Above 84 years": { male: 0, female: 0 },
   });
 
   const [totalMale, setTotalMale] = useState<number>(0);
@@ -42,7 +42,7 @@ export default function VoterForm() {
     if (age >= 20 && age <= 29) return "20-29 years";
     if (age >= 30 && age <= 59) return "30-59 years";
     if (age >= 60 && age <= 84) return "60-84 years";
-    if (age > 85) return "Above 84 years";
+    if (age >= 85) return "Above 84 years";
     return "Invalid Age";
   };
 
@@ -63,7 +63,7 @@ export default function VoterForm() {
       "20-29 years": { male: 0, female: 0 },
       "30-59 years": { male: 0, female: 0 },
       "60-84 years": { male: 0, female: 0 },
-      "Above 85 years": { male: 0, female: 0 },
+      "Above 84 years": { male: 0, female: 0 },
     };
 
     let maleCount = 0;
@@ -131,7 +131,7 @@ export default function VoterForm() {
       "20-29 years": { male: 0, female: 0 },
       "30-59 years": { male: 0, female: 0 },
       "60-84 years": { male: 0, female: 0 },
-      "Above 85 years": { male: 0, female: 0 },
+      "Above 84 years": { male: 0, female: 0 },
     });
     setTotalMale(0);
     setTotalFemale(0);
