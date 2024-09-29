@@ -204,7 +204,8 @@ export default function VoterForm() {
               Submit{" "}
             </button>
             <button
-              className="bg-orange-400 border border-green-700 px-2 py-1 rounded-lg hover:bg-green-600 transition-all duration-200 hover:text-black"
+            
+              className="bg-orange-400 border hidden border-green-700 px-2 py-1 rounded-lg hover:bg-green-600 transition-all duration-200 hover:text-black"
               type="button"
               onClick={clearAll}
             >
